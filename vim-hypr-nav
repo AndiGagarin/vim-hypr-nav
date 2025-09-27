@@ -39,22 +39,23 @@ get_descendant_vim_pid() {
     return 1
 }
 
+vim_remote_exp() {
+  if [ "$program" = vim ]; then
+    vim --servername "$servername" --remote-expr "$@"
+  elif [ "$program" = nvim ]; then
+    nvim --headless --server "$servername" --remote-expr "$@"
+  fi
+}
+
 if focused_pid="$(hyprctl activewindow -j | jq -e '.pid')"; then
     terms="$(find /dev/pts -type c -not -name ptmx | sed s#^/dev/## | tr '\n' ,)"
     if vim_pid="$(get_descendant_vim_pid "$focused_pid" "$terms")"; then
         servername_file="${XDG_RUNTIME_DIR:-/tmp}/vim-hypr-nav.$vim_pid.servername"
         read -r program servername <"$servername_file"
 
-        if [ "$program" = vim ]; then
-            serverarg=--servername
-        elif [ "$program" = nvim ]; then
-            serverarg=--server
-        fi
-
-        if [ -n "$serverarg" ] && [ -n "$servername" ]; then
-            "$program" "$serverarg" "$servername" \
-                --remote-expr "VimHyprNav('$dir')" >/dev/null 2>&1 \
-                && exit 0
+        if [ -n "$servername" ]; then
+          handled=$(vim_remote_exp "VimHyprNav('$dir')")
+          [ "$handled" = "true" ]  && exit 0
         fi
     fi
 fi
