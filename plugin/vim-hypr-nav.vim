@@ -45,7 +45,7 @@ endif
 " Function to be called remotely by the helper script.
 function VimHyprNav(dir)
     let l:dir_flag = get({"l": "h", "d": "j", "u": "k", "r": "l"}, a:dir)
-    if winnr(l:dir_flag) == winnr()
+    if winnr(l:dir_flag) == winnr() || win_gettype(winnr()) == "popup"
         return "false"
     else
         execute "wincmd " . l:dir_flag
